@@ -1,0 +1,23 @@
+language: generic
+sudo: required
+services:
+    - docker
+
+before_install:
+    - docker build -t aurorawr/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+    - docker run -e CI=true aurorawr/react-test npm run test 
+
+after_success:
+    - docker build -t aurorawr/multi-client ./client
+    - docker build -t aurorawr/multi-nginx ./nginx
+    - docker build -t aurorawr/multi-server ./server
+    - docker build -t aurorawr/multi-worker ./worker
+    # Log in docker cli
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+    # Push to dockerhub
+    - docker push aurorawr/multi-client
+    - docker push aurorawr/multi-nginx
+    - docker push aurorawr/multi-server
+    - docker push aurorawr/multi-worker
